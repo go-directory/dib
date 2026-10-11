@@ -75,19 +75,17 @@ func (r *DirectoryInformationBase) CreateOrOpenDIT(cfg Config) (dit *DirectoryIn
 		var base Database
 		if base, err = NewDatabase(cfg.Type); err == nil {
 			base.SetLoglevel(r.Loglevel)
-			offset := bytes.Count(bdn, []byte(`,`)) // TODO: skip escaped commas
 			var dn syntax.DistinguishedName
 			if dn, err = syntax.NewDistinguishedName(bdn, true); err == nil {
+				dn.Boundary = uint(bytes.Count(bdn, []byte(`,`))) // TODO: skip escaped commas
 				dit = &DirectoryInformationTree{
-					db:  base,
-					dib: r,
-					dir: cfg.DataDir,
-					typ: cfg.Type,
-					root: contextProfile{
-						dn:  dn,
-						off: offset,
-					},
+					db:   base,
+					dib:  r,
+					dir:  cfg.DataDir,
+					typ:  cfg.Type,
+					root: contextProfile{dn: dn},
 				}
+
 				if err = dit.open(cfg); err == nil {
 					r.emitT("CreateOrOpenDIT: dit %q (%s): open %q",
 						dit.root.dn.Normal, cfg.Name, dit.dir)
