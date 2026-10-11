@@ -7,7 +7,6 @@ the X.501 Directory Information Tree.
 
 import (
 	"bytes"
-	"errors"
 	"os"
 	"strings"
 
@@ -223,12 +222,12 @@ func (r *Config) Verify() (err error) {
 	r.prepareBitValue()
 
 	if r.Name == "" {
-		err = errors.New("Config MUST have a unique alphanumeric name")
+		err = backendError("Config MUST have a unique alphanumeric name")
 		return
 	}
 
 	if ownerCanRead := r.Mode&0400 != 0; !ownerCanRead {
-		err = errors.New("Owner MUST have read privileges at a minimum")
+		err = backendError("Owner MUST have read privileges at a minimum")
 		return
 	} else if ownerCanWrite := r.Mode&0600 != 0; !ownerCanWrite {
 		r.Opts.Shift(1) // enact READ-ONLY
@@ -237,7 +236,7 @@ func (r *Config) Verify() (err error) {
 	switch r.Type {
 	case Persistent:
 		if r.DataDir == "" {
-			err = errors.New("Invalid Config.DataDir value for Persistent database")
+			err = backendError("Invalid Config.DataDir value for Persistent database")
 			return
 		}
 		var exists bool
@@ -246,12 +245,12 @@ func (r *Config) Verify() (err error) {
 		}
 
 		if r.Name == "rootdse" {
-			err = errors.New("rootdse Config.Type MUST be Ephemeral")
+			err = backendError("rootdse Config.Type MUST be Ephemeral")
 			return
 		}
 
 		if r.Suffix == "" {
-			err = errors.New("Empty suffix can only serve rootdse")
+			err = backendError("Empty suffix can only serve rootdse")
 			return
 		}
 
@@ -261,12 +260,12 @@ func (r *Config) Verify() (err error) {
 	case Ephemeral:
 		if r.Name == "rootdse" {
 			if r.Suffix != "" {
-				err = errors.New("Inappropriate rootdse suffix (should be empty)")
+				err = backendError("Inappropriate rootdse suffix (should be empty)")
 				return
 			}
 		}
 	default:
-		err = errors.New("Invalid Config.Type value; must be Persistent or Ephemeral")
+		err = backendError("Invalid Config.Type value; must be Persistent or Ephemeral")
 	}
 
 	return

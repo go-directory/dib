@@ -3,7 +3,6 @@ package dib
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -110,7 +109,7 @@ func fileExists(name string, mustExist ...bool) (exists bool, err error) {
 
 	if _, err = os.Stat(name); err == nil {
 		exists = true
-	} else if errors.Is(err, ErrNotExist) {
+	} else if errorIs(err, ErrNotExist) {
 		if !must {
 			// nullify error, since it isn't
 			// a "problem" the file does not
@@ -214,13 +213,13 @@ func decodeByteSlices(b []byte) (out [][]byte, err error) {
 	out = make([][]byte, 0, count)
 	for i := 0; i < count; i++ {
 		if pos+4 > len(b) {
-			err = errors.New("decode error: truncated slice")
+			err = backendError("decode error: truncated slice")
 			break
 		}
 		l := int(binary.BigEndian.Uint32(b[pos : pos+4]))
 		pos += 4
 		if mCondO(l < 0, pos+l > len(b)) {
-			err = errors.New("decode error: truncated slice")
+			err = backendError("decode error: truncated slice")
 			break
 		}
 		out = append(out, b[pos:pos+l])
