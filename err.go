@@ -3,8 +3,6 @@ package dib
 import (
 	"errors"
 	"os"
-
-	"github.com/go-directory/common"
 )
 
 var (
@@ -43,9 +41,4 @@ func errBucketName(uerr error, name any) (err error) {
 	}
 
 	return backendError(uerr.Error(), n)
-}
-
-func backendError(msg ...string) error {
-	m := append([]string{"Backend error: "}, msg...)
-	return common.ErrorBackend.New(m...)
 }

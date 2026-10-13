@@ -72,6 +72,14 @@ func blc(in []byte) []byte {
 	return bld.Bytes()
 }
 
+var (
+	beq    = bytes.Equal
+	beqf   = bytes.EqualFold
+	bTrimR = bytes.TrimRight
+)
+
+var mkdir = os.Mkdir
+
 func getFlockPath(path string) string {
 	path = strings.TrimSpace(path)
 	dir := getPathDir(path)

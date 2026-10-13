@@ -8,9 +8,7 @@ X.501 Directory Information Base.
 import (
 	"bytes"
 
-	"github.com/go-directory/common"
 	"github.com/go-directory/config"
-	"github.com/go-directory/syntax"
 )
 
 /*
@@ -34,17 +32,18 @@ A DSA is expected to only operate a single instance of this type.
 type DirectoryInformationBase struct {
 	DITs     []*DirectoryInformationTree
 	BuiltIns map[string]*DirectoryInformationTree
-	Loglevel *common.BitValue
+	Loglevel *BitValue
 	Config   *config.Config
 }
 
 /*
 New returns a freshly initialized instance of *[DirectoryInformationBase].
 */
-func New() *DirectoryInformationBase {
-	ll := common.NewBitValue(common.Uint8)
+func New(cfg *config.Config) *DirectoryInformationBase {
+	ll := new8BitValue()
 	d := &DirectoryInformationBase{
 		BuiltIns: make(map[string]*DirectoryInformationTree),
+		Config:   cfg,
 		Loglevel: &ll,
 	}
 	d.Loglevel.SetNamesMap(map[int]string{
@@ -52,6 +51,12 @@ func New() *DirectoryInformationBase {
 		logWarning: "WARNING", // 2
 		logTrace:   "TRACE",   // 4
 	})
+
+	if err := verifyRuntimeConfig(cfg); err != nil {
+		d.emitE(err.Error())
+		panic(err)
+	}
+
 	d.emitT("DIB init")
 	return d
 }
@@ -62,42 +67,44 @@ CreateOrOpenDIT registers and returns a root instance of *[DirectoryInformationT
 To extend the return value to include glued subordinate contexts, see the
 [DirectoryInformationTree.CreateOrOpenGlueContext] method.
 */
-func (r *DirectoryInformationBase) CreateOrOpenDIT(cfg Config) (dit *DirectoryInformationTree) {
-	if _, found := r.BuiltIns[lc(cfg.Suffix)]; found {
-		r.emitE("CreateOrOpenDIT: suffix already exists: %q", cfg.Suffix)
+func (r *DirectoryInformationBase) CreateOrOpenDIT(suffix LDAPDN) (dit *DirectoryInformationTree) {
+	if _, found := r.BuiltIns[string(blc(suffix))]; found {
+		r.emitE("CreateOrOpenDIT: suffix already exists: %q", suffix)
 		return
 	}
 
-	err := cfg.Verify()
-	if err == nil {
-		bdn := []byte(cfg.Suffix)
+	entry, ok := r.Config.DIB.DIT(suffix)
+	if !ok {
+		r.emitE("CreateOrOpenDIT: suffix '", string(suffix), "' not found within cn=dib,cn=config")
+		return
+	}
 
-		var base Database
-		if base, err = NewDatabase(cfg.Type); err == nil {
-			base.SetLoglevel(r.Loglevel)
-			var dn syntax.DistinguishedName
-			if dn, err = syntax.NewDistinguishedName(bdn, true); err == nil {
-				dn.Boundary = uint(bytes.Count(bdn, []byte(`,`))) // TODO: skip escaped commas
-				dit = &DirectoryInformationTree{
-					db:   base,
-					dib:  r,
-					dir:  cfg.DataDir,
-					typ:  cfg.Type,
-					root: contextProfile{dn: dn},
-				}
+	var base Database
+	var err error
+	if base, err = NewDatabase(entry.Type); err == nil {
+		base.SetLoglevel(r.Loglevel)
+		var dn DistinguishedName
+		if dn, err = newDN(suffix, true); err == nil {
+			dn.Boundary = uint(bytes.Count(suffix, []byte(`,`))) // TODO: skip escaped commas
+			dit = &DirectoryInformationTree{
+				db:   base,
+				dib:  r,
+				dir:  string(entry.DataDir),
+				typ:  entry.Type,
+				root: contextProfile{dn: dn},
+			}
 
-				if err = dit.open(cfg); err == nil {
-					r.emitT("CreateOrOpenDIT: dit %q (%s): open %q",
-						dit.root.dn.Normal, cfg.Name, dit.dir)
-					r.DITs = append(r.DITs, dit)
-				}
+			if err = dit.open(entry); err == nil {
+				r.emitT("CreateOrOpenDIT: dit %q (%s): open %q",
+					dit.root.dn.Normal, entry.Name, dit.dir)
+				r.DITs = append(r.DITs, dit)
 			}
 		}
 	}
 
 	if err != nil {
 		r.emitE("CreateOrOpenDIT: failed to create or open %q (%s): %v",
-			cfg.Suffix, cfg.Name, err.Error())
+			entry.Suffix, entry.Name, err.Error())
 	}
 
 	return
@@ -115,14 +122,14 @@ If the specific root suffix is already known, simply call it from the underlying
 "DITs" field map residing within the receiver instance as opposed to calling this
 method.
 */
-func (r *DirectoryInformationBase) DIT(suffix string) (dit *DirectoryInformationTree) {
-	dn, err := syntax.NewDistinguishedName([]byte(suffix), true)
+func (r *DirectoryInformationBase) DIT(suffix LDAPDN) (dit *DirectoryInformationTree) {
+	dn, err := newDN(suffix, true)
 	if err != nil {
 		r.emitE("DIT: invalid DN %q: %v", suffix, err.Error())
 		return
 	}
 
-	lsfx := lc(suffix)
+	lsfx := lc(suffix.String())
 	if bi, found := r.BuiltIns[lsfx]; found {
 		r.emitT("DIT: Matched built-in %q", lsfx)
 		dit = bi

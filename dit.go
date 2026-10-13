@@ -7,11 +7,7 @@ the X.501 Directory Information Tree.
 
 import (
 	"bytes"
-	"os"
-	"strings"
 
-	"github.com/go-directory/common"
-	"github.com/go-directory/syntax"
 	"github.com/gofrs/flock"
 )
 
@@ -48,23 +44,21 @@ func (r *DirectoryInformationTree) Suffix() string {
 	return string(r.root.dn.Case)
 }
 
-func (r DirectoryInformationTree) DN() syntax.DistinguishedName {
+func (r DirectoryInformationTree) DN() DistinguishedName {
 	return r.root.dn
 }
 
-func (r DirectoryInformationTree) ContextOffset() int {
-	return r.root.off
-}
+func (r DirectoryInformationTree) ContextOffset() uint { return r.root.dn.Boundary }
 
 func (r DirectoryInformationTree) Type() int { return r.typ }
-
-func (r DirectoryInformationTree) lockfile() string {
-	return r.lock.Path()
-}
 
 func (r DirectoryInformationTree) Parent() *DirectoryInformationTree {
 	return r.parent
 }
+
+func (r DirectoryInformationTree) lockfile() string { return r.lock.Path() }
+func (r DirectoryInformationTree) path() string     { return r.db.Path() }
+func (r *DirectoryInformationTree) IsGlue() bool    { return r.parent != nil }
 
 /*
 Db returns the underlying [Database] stored in the receiver
@@ -84,64 +78,46 @@ If a specified [BackendType] is [Ephemeral], the backend shall always be empty u
 initialization. If the specified [BackendType] is [Persistent], an attempt to read an
 existing [Database] shall be made, should one be present, else it will be created anew.
 */
-func (r *DirectoryInformationTree) CreateOrOpenGlueContext(cfg Config) *DirectoryInformationTree {
-	if !r.verify(cfg) {
+func (r *DirectoryInformationTree) CreateOrOpenGlueContext(suffix LDAPDN) *DirectoryInformationTree {
+	entry, ok := r.dib.Config.DIB.DIT(suffix)
+	if !ok {
+		emitE(r.dib.Loglevel, "CreateOrOpenGlueContext: parent of glue suffix'", string(suffix), "' not found within cn=dib,cn=config")
 		return nil
 	}
 
-	bdn := []byte(cfg.Suffix)
 	var glue *DirectoryInformationTree
-
 	var base Database
 	var err error
-	if base, err = NewDatabase(cfg.Type); err == nil {
-		offset := bytes.Count(bdn, []byte(`,`))
-		var dn syntax.DistinguishedName
-		if dn, err = syntax.NewDistinguishedName(bdn, true); err == nil {
+
+	if base, err = NewDatabase(entry.Type); err == nil {
+		var dn DistinguishedName
+		if dn, err = newDN(suffix, true); err == nil {
+			dn.Boundary = uint(bytes.Count(suffix, []byte(`,`)))
 			glue = &DirectoryInformationTree{
 				db:     base,
 				parent: r,
-				dir:    cfg.DataDir,
-				typ:    cfg.Type,
-				root: contextProfile{
-					dn:  dn,
-					off: offset,
-				},
+				dir:    string(entry.DataDir),
+				typ:    entry.Type,
+				root:   contextProfile{dn: dn},
 			}
-			if err = glue.open(cfg); err == nil {
+
+			if err = glue.open(entry); err == nil {
 				r.dib.emitT("CreateOrOpenGlueContext: dit %q (%s): open %q",
-					cfg.Suffix, cfg.Name, glue.dir)
+					entry.Suffix, entry.Name, glue.dir)
 				if r.glue == nil {
 					r.glue = make(map[string]*DirectoryInformationTree)
 				}
-				r.glue[lc(cfg.Suffix)] = glue
+				r.glue[string(blc(entry.Suffix))] = glue
 			}
 		}
 	}
 
 	if err != nil {
 		r.dib.emitE("CreateOrOpenGlueContext: failed to create or open %q (%s): %v",
-			cfg.Suffix, cfg.Name, err.Error())
+			entry.Suffix, entry.Name, err.Error())
 	}
 
 	return glue
-}
-
-func (r DirectoryInformationTree) verify(cfg Config) bool {
-	var v bool = true // assume true by default
-	if err := cfg.Verify(); err != nil {
-		r.dib.emitE("CreateOrOpenGlueContext: %v", err.Error())
-		v = false
-	} else if cfg.Suffix == "" {
-		r.dib.emitE("CreateOrOpenGlueContext: suffix is zero")
-		v = false
-	} else if !bytes.HasSuffix(blc([]byte(cfg.Suffix)), r.root.dn.Normal) {
-		r.dib.emitE("CreateOrOpenGlueContext: no appropriate backend suffix from which to extend")
-		v = false
-	}
-	// TODO: check that cfg.Suffix is *immediate* child of r.Suffix()
-
-	return v
 }
 
 // bucket literals
@@ -167,108 +143,6 @@ var buckets = [][]byte{
 	id2nmlK,
 	subentK,
 	c2pK,
-}
-
-type Config struct {
-	Name    string      // alphanumeric "friendly" backend name
-	Suffix  string      // root suffix of backend
-	DataDir string      // data directory
-	Mode    os.FileMode // mode used for data file; default: 0660
-	Type    int         // type of backend to open or init (1=E/2=P)
-	NoSync  bool        // Use with caution; see boltdb/bolt reference.
-
-	// misc. bit-shifted options (uint32)
-	//
-	// 1 - ReadOnly
-	// 2
-	// 4
-	// 8
-	// 16
-	// 32
-	// 64
-	Opts common.BitValue
-
-	file string // actual data file
-}
-
-func (r *Config) prepareBitValue() {
-	if r.Opts.Kind() == 0x0 || r.Opts.Size() == 0 {
-		// initialize bitvalue store
-		r.Opts = common.NewBitValue(common.Uint32)
-	} else if r.Opts.Size() != 32 {
-		// bitvalue type is too small, so
-		// backup whatever is already set
-		// (if anything) ...
-		val := r.Opts.Value()
-
-		// Initialize new 32 bit bitvalue.
-		r.Opts = common.NewBitValue(common.Uint32)
-
-		// Shift the value we set aside.
-		switch tv := val.(type) {
-		case uint8:
-			r.Opts.Shift(tv)
-		case uint16:
-			r.Opts.Shift(tv)
-		}
-	}
-}
-
-/*
-Verify returns an error following an analysis of the
-receiver instance.
-*/
-func (r *Config) Verify() (err error) {
-	r.prepareBitValue()
-
-	if r.Name == "" {
-		err = backendError("Config MUST have a unique alphanumeric name")
-		return
-	}
-
-	if ownerCanRead := r.Mode&0400 != 0; !ownerCanRead {
-		err = backendError("Owner MUST have read privileges at a minimum")
-		return
-	} else if ownerCanWrite := r.Mode&0600 != 0; !ownerCanWrite {
-		r.Opts.Shift(1) // enact READ-ONLY
-	}
-
-	switch r.Type {
-	case Persistent:
-		if r.DataDir == "" {
-			err = backendError("Invalid Config.DataDir value for Persistent database")
-			return
-		}
-		var exists bool
-		if exists, err = fileExists(r.DataDir, true); !exists {
-			return
-		}
-
-		if r.Name == "rootdse" {
-			err = backendError("rootdse Config.Type MUST be Ephemeral")
-			return
-		}
-
-		if r.Suffix == "" {
-			err = backendError("Empty suffix can only serve rootdse")
-			return
-		}
-
-		r.file = strings.TrimRight(r.DataDir, `/`) + `/` + r.Name + `/data.db`
-		os.Mkdir(r.DataDir+`/`+r.Name, r.Mode+0100)
-
-	case Ephemeral:
-		if r.Name == "rootdse" {
-			if r.Suffix != "" {
-				err = backendError("Inappropriate rootdse suffix (should be empty)")
-				return
-			}
-		}
-	default:
-		err = backendError("Invalid Config.Type value; must be Persistent or Ephemeral")
-	}
-
-	return
 }
 
 const (
@@ -306,16 +180,8 @@ vs. non-tokenized, offset, structural
 class and attribute governance info.
 */
 type contextProfile struct {
-	dn  syntax.DistinguishedName
-	id  []byte // BE uint64 identifier
-	off int    // context delim. offset
-	soc string // structuralObjectClass numeric oid
-	gsr string // governingStructureRule number
-	acr string // applicable dITContentRule
-}
-
-func (r DirectoryInformationTree) path() string {
-	return r.db.Path()
+	dn DistinguishedName
+	id []byte // BE uint64 identifier
 }
 
 /*
@@ -347,18 +213,19 @@ instance is created from scratch at the path indicated.
 If the [backend] is [Ephemeral], naturally it resides in memory only --
 initialized from scratch at the start of each runtime process.
 */
-func (r *DirectoryInformationTree) open(cfg Config) (err error) {
+func (r *DirectoryInformationTree) open(cfg dITConfig) (err error) {
+	datafile := string(cfg.DataFile)
 	opts := DBOptions{
-		File:   cfg.file,
+		File:   datafile,
 		Mode:   cfg.Mode,
 		NoSync: cfg.NoSync,
 	}
 
 	r.dib.emitT("DIT open (%s): file[%q] mode[%d] nosync[%t]",
-		cfg.Suffix, cfg.file, cfg.Mode, cfg.NoSync)
+		cfg.Suffix, cfg.DataFile, cfg.Mode, cfg.NoSync)
 
 	if r.typ == Persistent {
-		r.lock = flock.NewFlock(getFlockPath(cfg.file))
+		r.lock = flock.NewFlock(getFlockPath(datafile))
 		var locked bool
 		if locked, err = r.lock.TryLock(); err != nil {
 			return
@@ -396,8 +263,4 @@ func (r *DirectoryInformationTree) Close() {
 			}
 		}
 	}
-}
-
-func (r *DirectoryInformationTree) IsGlue() bool {
-	return r.parent != nil
 }

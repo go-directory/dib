@@ -1,9 +1,5 @@
 package dib
 
-import (
-	"github.com/go-directory/common"
-)
-
 /*
 Database implements an ephemeral (map) or persistent (boltdb) database.
 
@@ -37,10 +33,10 @@ type Database interface {
 	Update(func(Tx) error) error
 	View(func(Tx) error) error
 
-	// SetLoglevel assigns the instance of *common.BitValue to
+	// SetLoglevel assigns the instance of *BitValue to
 	// the receiver. This will be propagated to all subsequent
 	// instances of Bucket, Cursor and Tx.
-	SetLoglevel(*common.BitValue)
+	SetLoglevel(*BitValue)
 }
 
 /*

@@ -4,7 +4,6 @@ import (
 	"sort"
 
 	"github.com/boltdb/bolt"
-	"github.com/go-directory/common"
 )
 
 /*
@@ -12,7 +11,7 @@ pBucket implements a persistent [Bucket].
 */
 type pBucket struct {
 	bk *bolt.Bucket
-	ll *common.BitValue
+	ll *BitValue
 }
 
 /*
@@ -20,7 +19,7 @@ eBucket implements an ephemeral [Bucket].
 */
 type eBucket struct {
 	store *eDB
-	ll    *common.BitValue
+	ll    *BitValue
 	seq   uint64
 	sort  bool
 	root  *eBucket

@@ -2,7 +2,6 @@ package dib
 
 import (
 	"github.com/boltdb/bolt"
-	"github.com/go-directory/common"
 )
 
 /*
@@ -11,7 +10,7 @@ instance.
 */
 type eCursor struct {
 	store   *eDB
-	ll      *common.BitValue
+	ll      *BitValue
 	bk      *eBucket
 	keys    []string
 	current int
@@ -164,7 +163,7 @@ instance.
 */
 type pCursor struct {
 	c  *bolt.Cursor
-	ll *common.BitValue
+	ll *BitValue
 }
 
 /*

@@ -11,11 +11,10 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
-	"github.com/go-directory/common"
 )
 
 func NewDatabase(typ int) (base Database, err error) {
-	bv := common.NewBitValue(common.Uint8)
+	bv := new8BitValue()
 	switch typ {
 	case 1:
 		base = &eDB{
@@ -76,7 +75,7 @@ pDB defines a traditional *[bolt.DB] instance and qualifies the
 */
 type pDB struct {
 	db *bolt.DB
-	ll *common.BitValue
+	ll *BitValue
 }
 
 /*
@@ -116,9 +115,9 @@ func (r *pDB) Path() string {
 }
 
 /*
-SetLoglevel assigns the input *[common.Loglevel] instance to the receiver.
+SetLoglevel assigns the input *[Loglevel] instance to the receiver.
 */
-func (r *pDB) SetLoglevel(ll *common.BitValue) { r.ll = ll }
+func (r *pDB) SetLoglevel(ll *BitValue) { r.ll = ll }
 
 /*
 View returns an error following an attempt to begin a new view [Tx].
@@ -186,7 +185,7 @@ content such as the cn=Monitor DIT. Instances of this type qualify the
 */
 type eDB struct {
 	bk   map[string]*eBucket
-	ll   *common.BitValue
+	ll   *BitValue
 	lock *sync.RWMutex
 	txid int
 }
@@ -234,9 +233,9 @@ Path returns the path to the currently open Database.
 func (r *eDB) Path() string { return "" }
 
 /*
-SetLoglevel assigns the input *[common.Loglevel] instance to the receiver.
+SetLoglevel assigns the input *[Loglevel] instance to the receiver.
 */
-func (r *eDB) SetLoglevel(ll *common.BitValue) { r.ll = ll }
+func (r *eDB) SetLoglevel(ll *BitValue) { r.ll = ll }
 
 /*
 Open initializes a new ephemeral map instance within the receiver.  The
@@ -252,7 +251,7 @@ The returned error instance shall always be nil and may be safely shadowed.
 In general, it is more convenient to call [newE] than to use this method.
 */
 func (r *eDB) Open(_ DBOptions) error {
-	ll := common.NewBitValue(common.Uint8)
+	ll := new8BitValue()
 	var err error
 	if !r.IsZero() {
 		if r.bk == nil {

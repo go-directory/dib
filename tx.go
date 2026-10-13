@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"github.com/boltdb/bolt"
-	"github.com/go-directory/common"
 )
 
 /*
@@ -12,7 +11,7 @@ eTx implements an EPHEMERAL [Tx].
 */
 type eTx struct {
 	store     *eDB
-	ll        *common.BitValue
+	ll        *BitValue
 	writable  bool
 	root      *eBucket
 	bk        map[string]*eBucket
@@ -197,7 +196,7 @@ of *[bolt.Tx].
 */
 type pTx struct {
 	tx *bolt.Tx
-	ll *common.BitValue
+	ll *BitValue
 }
 
 func (r *pTx) DB() Database {
