@@ -81,6 +81,8 @@ func (r *DirectoryInformationBase) CreateOrOpenDIT(suffix LDAPDN, builtin ...boo
 		return
 	}
 
+	isBuiltin := len(builtin) > 0 && builtin[0]
+
 	var base Database
 	var err error
 	if base, err = NewDatabase(entry.Type); err == nil {
@@ -100,7 +102,7 @@ func (r *DirectoryInformationBase) CreateOrOpenDIT(suffix LDAPDN, builtin ...boo
 				r.emitT("CreateOrOpenDIT: dit %q (%s): open %q",
 					dit.root.dn.Normal, entry.Name, dit.dir)
 
-				if builtin {
+				if isBuiltin {
 					r.BuiltIns[ssfx] = dit
 				} else {
 					r.DITs[ssfx] = dit
