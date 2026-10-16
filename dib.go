@@ -30,10 +30,11 @@ A DSA is expected to only operate a single instance of this type.
 [ITU-T Rec. X.501 cl. 7]: https://www.itu.int/rec/T-REC-X.501
 */
 type DirectoryInformationBase struct {
-	DITs     []*DirectoryInformationTree
+	DITs     map[string]*DirectoryInformationTree
 	BuiltIns map[string]*DirectoryInformationTree
 	Loglevel *BitValue
 	Config   *config.Config
+	ord      []string
 }
 
 /*
@@ -67,15 +68,16 @@ CreateOrOpenDIT registers and returns a root instance of *[DirectoryInformationT
 To extend the return value to include glued subordinate contexts, see the
 [DirectoryInformationTree.CreateOrOpenGlueContext] method.
 */
-func (r *DirectoryInformationBase) CreateOrOpenDIT(suffix LDAPDN) (dit *DirectoryInformationTree) {
-	if _, found := r.BuiltIns[string(blc(suffix))]; found {
+func (r *DirectoryInformationBase) CreateOrOpenDIT(suffix LDAPDN, builtin ...bool) (dit *DirectoryInformationTree) {
+	ssfx := string(blc(suffix))
+	if _, found := r.BuiltIns[ssfx]; found {
 		r.emitE("CreateOrOpenDIT: suffix already exists: %q", suffix)
 		return
 	}
 
 	entry, ok := r.Config.DIB.DIT(suffix)
 	if !ok {
-		r.emitE("CreateOrOpenDIT: suffix '", string(suffix), "' not found within cn=dib,cn=config")
+		r.emitE("CreateOrOpenDIT: suffix '", ssfx, "' not found within cn=dib,cn=config")
 		return
 	}
 
@@ -97,7 +99,13 @@ func (r *DirectoryInformationBase) CreateOrOpenDIT(suffix LDAPDN) (dit *Director
 			if err = dit.open(entry); err == nil {
 				r.emitT("CreateOrOpenDIT: dit %q (%s): open %q",
 					dit.root.dn.Normal, entry.Name, dit.dir)
-				r.DITs = append(r.DITs, dit)
+
+				if builtin {
+					r.BuiltIns[ssfx] = dit
+				} else {
+					r.DITs[ssfx] = dit
+					r.ord = append(r.ord, ssfx)
+				}
 			}
 		}
 	}
@@ -171,9 +179,9 @@ func (r *DirectoryInformationBase) DIT(suffix LDAPDN) (dit *DirectoryInformation
 
 	// Iterate through all DITs within the receiver DIB,
 	// call recurse on each one of them.
-	for i := 0; i < len(r.DITs) && dit == nil; i++ {
-		r.emitT("DIT: recursing %q", r.DITs[i].root.dn.Normal)
-		dit = recurse(r.DITs[i])
+	for i := 0; i < len(r.ord) && dit == nil; i++ {
+		r.emitT("DIT: recursing %q", r.DITs[r.ord[i]].root.dn.Normal)
+		dit = recurse(r.DITs[r.ord[i]])
 	}
 
 	if dit == nil {

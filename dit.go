@@ -81,7 +81,8 @@ existing [Database] shall be made, should one be present, else it will be create
 func (r *DirectoryInformationTree) CreateOrOpenGlueContext(suffix LDAPDN) *DirectoryInformationTree {
 	entry, ok := r.dib.Config.DIB.DIT(suffix)
 	if !ok {
-		emitE(r.dib.Loglevel, "CreateOrOpenGlueContext: parent of glue suffix'", string(suffix), "' not found within cn=dib,cn=config")
+		emitE(r.dib.Loglevel, "CreateOrOpenGlueContext: parent of glue suffix'",
+			string(suffix), "' not found within cn=dib,cn=config")
 		return nil
 	}
 
