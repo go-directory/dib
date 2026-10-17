@@ -29,8 +29,8 @@ reside in a single backend instance that is already home to other branches.
 [ITU-T Rec. X.501 cl. 7.4]: https://www.itu.int/rec/T-REC-X.501
 */
 type DirectoryInformationTree struct {
+	Glue   map[string]*DirectoryInformationTree // glued subordinates
 	dib    *DirectoryInformationBase            // pointer reference to top-level context
-	glue   map[string]*DirectoryInformationTree // glued subordinates
 	db     Database                             // actual backend database
 	dir    string                               // data directory (persistent only)
 	typ    int                                  // ephemeral[1], persistent[2]
@@ -105,10 +105,10 @@ func (r *DirectoryInformationTree) CreateOrOpenGlueContext(suffix LDAPDN) *Direc
 			if err = glue.open(entry); err == nil {
 				r.dib.emitT("CreateOrOpenGlueContext: dit %q (%s): open %q",
 					entry.Suffix, entry.Name, glue.dir)
-				if r.glue == nil {
-					r.glue = make(map[string]*DirectoryInformationTree)
+				if r.Glue == nil {
+					r.Glue = make(map[string]*DirectoryInformationTree)
 				}
-				r.glue[string(blc(entry.Suffix))] = glue
+				r.Glue[string(blc(entry.Suffix))] = glue
 			}
 		}
 	}

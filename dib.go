@@ -166,7 +166,7 @@ func (r *DirectoryInformationBase) DIT(suffix LDAPDN) (dit *DirectoryInformation
 		}
 
 		// try glued children first: deepest match wins.
-		for _, glue := range tree.glue {
+		for _, glue := range tree.Glue {
 			r.emitT("DIT: recursing glue %q", glue.root.dn.Normal)
 			if out = recurse(glue); out != nil {
 				return out
