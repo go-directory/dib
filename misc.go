@@ -6,19 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 )
-
-/*
-gtime returns the []byte representation of a generalized time value.
-*/
-func gtime() []byte {
-	return []byte(time.Now().Format(`20060102150405`) + `Z`)
-}
-
-func t2gt(t time.Time) []byte {
-	return []byte(t.Format(`20060102150405`) + `Z`)
-}
 
 /*
 mCondA is a cheap means to reduce cyclomatic complexity
