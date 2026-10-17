@@ -81,6 +81,10 @@ func (r *DirectoryInformationBase) CreateOrOpenDIT(suffix LDAPDN, builtin ...boo
 		return
 	}
 
+	if r.DITs == nil {
+		r.DITs = make(map[string]*DirectoryInformationTree)
+	}
+
 	isBuiltin := len(builtin) > 0 && builtin[0]
 
 	var base Database
