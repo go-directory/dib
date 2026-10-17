@@ -29,7 +29,7 @@ reside in a single backend instance that is already home to other branches.
 [ITU-T Rec. X.501 cl. 7.4]: https://www.itu.int/rec/T-REC-X.501
 */
 type DirectoryInformationTree struct {
-	SubPol uint8                                // subordinates policy: 0:hasSub+numSub, 1:numSub, 2:hasSub
+	SubPol uint8                                // subordinates policy: 0:disabled 1:numSub 2:hasSub 3:both
 	Glue   map[string]*DirectoryInformationTree // glued subordinates
 	dib    *DirectoryInformationBase            // pointer reference to top-level context
 	db     Database                             // actual backend database
