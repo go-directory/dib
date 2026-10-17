@@ -1,7 +1,7 @@
 package dib
 
 import (
-	"github.com/boltdb/bolt"
+	"github.com/go-directory/dib/internal/bolt"
 )
 
 /*

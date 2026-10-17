@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/boltdb/bolt"
+	"github.com/go-directory/dib/internal/bolt"
 )
 
 func NewDatabase(typ int) (base Database, err error) {

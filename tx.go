@@ -3,7 +3,7 @@ package dib
 import (
 	"sync"
 
-	"github.com/boltdb/bolt"
+	"github.com/go-directory/dib/internal/bolt"
 )
 
 /*
