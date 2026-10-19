@@ -42,8 +42,8 @@ func verifyRuntimeConfig(r *Config) (err error) {
 			err = verifyPersistentRuntimeConfig(isFE, zeroDIT, ndd)
 
 			r.DIB.DITs[i].DataFile = append(bTrimR(dit.DataDir, `/`), []byte(`/`)...)
-			r.DIB.DITs[i].DataFile = append(dit.DataFile, dit.Name...)
-			r.DIB.DITs[i].DataFile = append(dit.DataFile, []byte(`/data.db`)...)
+			r.DIB.DITs[i].DataFile = append(r.DIB.DITs[i].DataFile, dit.Name...)
+			r.DIB.DITs[i].DataFile = append(r.DIB.DITs[i].DataFile, []byte(`/data.db`)...)
 
 			mkdir(string(dit.DataDir)+`/`+string(dit.Name), dit.Mode+0100)
 
