@@ -14,12 +14,16 @@ func new32BitValue() BitValue {
 	return common.NewBitValue(common.Uint32)
 }
 
-func backendError(msg ...string) error {
-	m := append([]string{"Backend error: "}, msg...)
-	return common.ErrorBackend.New(m...)
+type commonErr = common.Error
+
+func backendError(msg ...string) (err commonErr) {
+	err = common.ErrorBackend.New(msg...)
+	err.SetHeader("backend:")
+	return
 }
 
-func configError(msg ...string) error {
-	m := append([]string{"Config error: "}, msg...)
-	return common.ErrorConfig.New(m...)
+func configError(msg ...string) (err commonErr) {
+	err = common.ErrorConfig.New(msg...)
+	err.SetHeader("config:")
+	return
 }
