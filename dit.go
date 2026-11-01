@@ -128,7 +128,9 @@ var (
 	dn2idK  = []byte(`_dn2id`)  // orig DN -> id
 	nml2idK = []byte(`_nml2id`) // normalized DN -> id
 	id2nmlK = []byte(`_id2nml`) // id -> normalized DN
-	subentK = []byte(`_subent`) // id -> zero bytes
+	subentK = []byte(`_subent`) // id -> zero bytes (is subentry?)
+	apK     = []byte(`_ap`)     // id -> zero bytes (is admin. point?)
+	ocK     = []byte(`_oc`)     // id -> zero bytes (key: idBE + <oc/soc> + <oid_value>)
 	c2pK    = []byte(`_c2p`)    // child ID to parent ID
 	p2cK    = []byte(`_p2c`)    // parent bucket SUFFIX LITERAL (not a bucket unto itself)
 )
@@ -144,6 +146,8 @@ var buckets = [][]byte{
 	id2nmlK,
 	subentK,
 	c2pK,
+	apK,
+	ocK,
 }
 
 const (
