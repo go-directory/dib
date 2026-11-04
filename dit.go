@@ -130,8 +130,8 @@ var (
 	id2nmlK = []byte(`_id2nml`) // id -> normalized DN
 	subentK = []byte(`_subent`) // id -> zero bytes (is subentry?)
 	depthK  = []byte(`_depth`)  // id -> BE depth from root; root is always zero (0)
-	id2aliK = []byte(`_id2ali`) // real id -> alias id
 	ali2idK = []byte(`_ali2id`) // alias id -> real id
+	id2aliK = []byte(`_id2ali`) // real/alias id SUFFIX LITERAL (not a bucket unto itself)
 	apK     = []byte(`_ap`)     // subentry id -> admin. point id
 	ocK     = []byte(`_oc`)     // id -> zero bytes (key: idBE + <oc/soc> + <oid_value>)
 	c2pK    = []byte(`_c2p`)    // child ID to parent ID
@@ -148,7 +148,6 @@ var buckets = [][]byte{
 	nml2idK,
 	id2nmlK,
 	subentK,
-	id2aliK,
 	ali2idK,
 	depthK,
 	c2pK,
