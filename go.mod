@@ -4,7 +4,7 @@ go 1.27.2
 
 require (
 	github.com/go-directory/common v0.0.0-20261030234857-b34d61401f03
-	github.com/go-directory/config v0.0.0-20261106075549-53063070df62
+	github.com/go-directory/config v0.0.0-20261106102139-2c6e852d3e14
 	github.com/go-directory/syntax v0.0.0-20261031034539-31395ba103f3
 	github.com/gofrs/flock v0.13.0
 	golang.org/x/sys v0.49.0
