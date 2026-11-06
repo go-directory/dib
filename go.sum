@@ -12,6 +12,8 @@ github.com/go-directory/config v0.0.0-20261031092009-b9b8187054ae h1:zGMYmBiFdw8
 github.com/go-directory/config v0.0.0-20261031092009-b9b8187054ae/go.mod h1:ud5KBqmjAa3Qs45aZrDYk8ZKIEHDxVXdXsrjyzULghY=
 github.com/go-directory/config v0.0.0-20261105233633-4f698f36b328 h1:62hTg66ebII58yTlx8pmT4Lmkz0Dgyt4OKUiaJKEnpI=
 github.com/go-directory/config v0.0.0-20261105233633-4f698f36b328/go.mod h1:ud5KBqmjAa3Qs45aZrDYk8ZKIEHDxVXdXsrjyzULghY=
+github.com/go-directory/config v0.0.0-20261106075549-53063070df62 h1:RQdNyfzoE7cOsTYAwol1RmkQdF6pSvTov3409dTjqAA=
+github.com/go-directory/config v0.0.0-20261106075549-53063070df62/go.mod h1:ud5KBqmjAa3Qs45aZrDYk8ZKIEHDxVXdXsrjyzULghY=
 github.com/go-directory/encoding v0.0.0-20261015063109-52bfbd1e4011 h1:A1alVnROVrZf6LdsyUctZI1kaiGN3YZU8ujBE/Nb/+0=
 github.com/go-directory/encoding v0.0.0-20261015063109-52bfbd1e4011/go.mod h1:CbGTrNCfq1900o2HjDX7796Lr+UkCRS29cgZsf1r3Yo=
 github.com/go-directory/encoding v0.0.0-20261019062442-b8834f4360e7 h1:F93H2UHCUPwkQQwyyJQ30NF8tWUSVLVlXXzPohQkqJ0=
